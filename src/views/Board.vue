@@ -5,25 +5,64 @@
         <div class="flex flex-center font-bold mb-2">
           {{ column.name }}
         </div>
-        <div class="task" v-for="(task, taskIndex) of column.tasks" :key="taskIndex">
+        <div
+          class="task"
+          v-for="(task, taskIndex) of column.tasks"
+          :key="taskIndex"
+          @click="openTaskModal(task)"
+        >
           <span class="w-full font-bold">
             {{ task.name }}
           </span>
-          <p class="text-sm mt-1">{{ task.description }}</p>
+          <p class="text-sm mt-1 w-full" v-if="task.description">
+            {{ task.description }}
+          </p>
         </div>
+        <input
+          class="bg-transparent p-2 w-full border-0 outline-none border-none"
+          placeholder="+ enter new task"
+          type="text"
+          @keyup.enter="createTask($event, column.tasks)"
+        />
       </div>
+    </div>
+    <div
+      class="task-bg"
+      v-if="isTaskOpen"
+      @click.self="closeTaskModal"
+      @keyup.esc="closeTaskModal"
+      tabindex="0"
+    >
+      <router-view />
     </div>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapState } from "vuex";
 export default {
-
   computed: {
-    ...mapState(['board'])
-  }
-}
+    ...mapState(["board"]),
+    isTaskOpen() {
+      return this.$route.name === "task";
+    },
+  },
+  methods: {
+    openTaskModal(task) {
+      this.$router.push({ name: "task", params: { id: task.id } });
+    },
+    closeTaskModal() {
+      this.$router.push({ name: "board" });
+    },
+    createTask(event, tasks) {
+      this.$store.commit("CREATE_TASK", {
+        tasks,
+        name: event.target.value,
+      });
+      event.target.value = "";
+    },
+  },
+};
 </script>
 
 <style lang="css">
