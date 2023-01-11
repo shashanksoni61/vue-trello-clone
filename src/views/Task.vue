@@ -5,12 +5,13 @@
         class="font-bold text-xl p-2 w-full flex-grow outline-none"
         type="text"
         :value="task.name"
+        @change="updateTaskData($event, 'name')"
         @keyup.enter="updateTaskData($event, 'name')"
       />
       <textarea
         class="h-64 mt-2 border border-0 w-full resize-none border-none outline-none"
         :value="task.description"
-        @keyup.enter="updateTaskData($event, 'description')"
+        @change="updateTaskData($event, 'description')"
       />
     </div>
   </div>

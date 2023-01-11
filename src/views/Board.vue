@@ -1,7 +1,14 @@
 <template>
   <div class="board">
     <div class="flex flex-row items-start">
-      <div class="column" v-for="(column, index) of board.columns" :key="index">
+      <div
+        class="column"
+        v-for="(column, columnIndex) of board.columns"
+        :key="columnIndex"
+        @drop="dropTask($event, column.tasks)"
+        @dragover.prevent
+        @dragenter.prevent
+      >
         <div class="flex flex-center font-bold mb-2">
           {{ column.name }}
         </div>
@@ -9,13 +16,15 @@
           class="task"
           v-for="(task, taskIndex) of column.tasks"
           :key="taskIndex"
+          draggable
+          @dragstart="pickupTask($event, columnIndex, taskIndex)"
           @click="openTaskModal(task)"
         >
-          <span class="w-full font-bold">
-            {{ task.name }}
+          <span class="w-full font-bold flex-no-shrink">
+            {{ shortenText(task.name) }}
           </span>
-          <p class="text-sm mt-1 w-full" v-if="task.description">
-            {{ task.description }}
+          <p class="text-sm mt-1 w-full flex-no-shrink" v-if="task.description">
+            {{ shortenText(task.description) }}
           </p>
         </div>
         <input
@@ -48,6 +57,9 @@ export default {
     },
   },
   methods: {
+    shortenText(text) {
+      return text.length > 40 ? text.substr(0, 40) + "..." : text;
+    },
     openTaskModal(task) {
       this.$router.push({ name: "task", params: { id: task.id } });
     },
@@ -61,6 +73,25 @@ export default {
       });
       event.target.value = "";
     },
+    pickupTask(event, fromColumnIndex, taskIndex) {
+      event.dataTransfer.dropEffect = "move";
+      event.dataTransfer.effectAllowed = "move";
+
+      event.dataTransfer.setData("task-index", taskIndex);
+      event.dataTransfer.setData("column-index", fromColumnIndex);
+    },
+    dropTask(event, toTasks) {
+      const fromColumnIndex = event.dataTransfer.getData("column-index");
+      const fromTasks = this.board.columns[fromColumnIndex].tasks;
+      const taskIndex = event.dataTransfer.getData("task-index");
+
+      console.log({ fromColumnIndex, fromTasks, taskIndex, toTasks });
+      this.$store.commit("MOVE_TASK", {
+        fromTasks,
+        toTasks,
+        taskIndex,
+      });
+    },
   },
 };
 </script>
@@ -68,6 +99,7 @@ export default {
 <style lang="css">
 .task {
   @apply flex items-center flex-wrap shadow mb-2 py-2 px-2 rounded bg-white text-grey-darkest no-underline;
+  max-width: 400px;
 }
 
 .column {
